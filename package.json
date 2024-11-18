@@ -1,0 +1,8 @@
+{
+  "scripts": {
+    "test": "cls && npx bddgen && npx playwright test"
+  },
+  "devDependencies": {
+    "playwright-bdd": "^7.5.0"
+  }
+}
