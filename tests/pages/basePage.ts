@@ -3,6 +3,12 @@ import { Page,Locator } from '@playwright/test';
 export default class BasePage {
     private basePage:Page;
 
+    //static identifier -----------------
+    searchUrl:string="https://www.themoviedb.org/search";
+    searchKeyExample:string="prison break";
+    sortLabelText:string="Sort Results By";
+    headerText:string="Popular Movies";
+
     //Locators ------------
     sortTap:Locator;
     sortLable:Locator;
@@ -12,7 +18,10 @@ export default class BasePage {
     tvShowButton:Locator;
     tvShowContainer:Locator;
     searchButton:Locator;
+    searchTextBox:Locator;
     firstElementTrending:Locator;
+    genersContainer:Locator;
+    firstSearchResultTitle:Locator;
 
     constructor(page:Page) {
         this.basePage=page;
@@ -25,6 +34,9 @@ export default class BasePage {
         this.tvShowButton=page.locator("a[aria-label='TV Shows']");
         this.tvShowContainer=page.locator("(//div[@data-role='popup'])[2]");
         this.searchButton=page.locator("a.search");
+        this.searchTextBox=page.locator("#search_v4");
         this.firstElementTrending=page.locator("(//span[@data-media-type='/tv'])[1]");
+        this.genersContainer=page.locator("#with_genres");
+        this.firstSearchResultTitle=page.locator("(//a[@data-media-adult='false']//h2)[1]");
     }
 }

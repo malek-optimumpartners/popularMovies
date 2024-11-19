@@ -1,92 +1,130 @@
-import { expect, Page, Browser, chromium, Locator } from '@playwright/test';
-import { createBdd, DataTable } from 'playwright-bdd';
+import { expect, Page, Browser, chromium, Locator,test } from "@playwright/test";
+import { createBdd, DataTable } from "playwright-bdd";
 import BasePage from "../pages/basePage";
+import { Given, When, Then, Fixture } from "playwright-bdd/decorators";
 import GlobalFunctions from "../utils/globalFunctions";
 
-const { Given, When, Then } = createBdd();
+export default
+@Fixture<typeof test>("popularMoviesSteps")
+class popularMoviesSteps {
+  constructor(page: Page) {
+    this.page = page;
+  }
 
-// -------------------------------------------------- variables --------------------------------------------------------------------
+  // -------------------------------------------------- variables --------------------------------------------------------------------
 
-let page: Page;
-let browser: Browser;
-let basePage:BasePage;
-let storedElementsTexts: Record<string, string> = {};
+  private page: Page;
+  private browser: Browser;
+  public basePage: BasePage;
+  private storedElementsTexts: Record<string, string> = {};
 
-//---------------------------------------------------- functions -------------------------------------------------------------------
+  //---------------------------------------------------- functions -------------------------------------------------------------------
 
-Given('User navigate to {string}', async ({}, urlString: string) => {
-    browser = await chromium.launch({ headless: false });
-    page = await browser.newPage();
-    await page.goto(urlString);
-    basePage=new BasePage(page);
-});
+  @Given(/^User navigate to (.+)$/)
+  async navigateToPage(urlString: string): Promise<void> {
+    this.browser = await chromium.launch({ headless: false });
+    this.page = await this.browser.newPage();
+    await this.page.goto(urlString);
+    this.basePage = new BasePage(this.page);
+  }
 
-Given('User click on {string}', async ({},buttonElement:string) => {
-    let button = await basePage[buttonElement];
-    
+  @Then(/^page element (.+) text is (.+)$/)
+  async checkPageElementText(element: string, txtParameter: string) {
+    let elementLocator: Locator = await this.basePage[element];
+    let textContent = await elementLocator.textContent();
+    await expect(textContent?.trim().toLowerCase()).toBe(this.basePage[txtParameter].trim().toLowerCase());
+  }
+
+  @Given(/^User click on (.+)$/)
+  async userClick(buttonElement: string) {
+    let button = await this.basePage[buttonElement];
+
     await button.click();
+  }
 
-  });
-  
-  Then('page element {string} text is {string}', async ({},element:string,txt:string) => {
-    let elementLocator:Locator=await basePage[element];
-    let textContent=await elementLocator.textContent();
-    await expect(textContent).toBe(txt);
-    
-  });
-  
-  Then('page to have title {string}',async ({},title:string) => {
-    let titleReturned:string = await page.title();
+  @Then(/^page to have title (.+)$/)
+  async checkPageTitle(title: string) {
+    let titleReturned: string = await this.page.title();
     await expect(titleReturned).toBe(title);
-  });
+  }
 
-  Given('user hover on {string}',async ({},element:string) => {
-    let hoverElement:Locator=await basePage[element];
+  @Given(/^user hover on (.+)$/)
+  async hoverElement(element: string) {
+    let hoverElement: Locator = await this.basePage[element];
     await hoverElement.hover();
-  });
+  }
 
-  Then('check container {string} childrens',async ({},containerEelement:string, table: DataTable) => {
-    let container:Locator=await basePage[containerEelement];
+  @Then(/^check container (.+) childrens$/)
+  async checkContainerChildrens(containerEelement: string, table: DataTable) {
+    let container: Locator = await this.basePage[containerEelement];
 
-    await container.waitFor({ state: 'visible' });
-    let childrens:string[]=await container.allInnerTexts();
-    let values:string[]=childrens[0].split('\n');
-    let count:number=0;
-    let status:boolean=true;
+    await container.waitFor({ state: "visible" });
+    let childrens: string[] = await container.allInnerTexts();
+    let values: string[] = childrens[0]
+      .split("\n")
+      .filter((str) => str.trim() !== "");
+    let count: number = 0;
+    let status: boolean = true;
 
-    // for (const row of table.raw()) {
-    //     selectors.push(modelPage[row[1]]);
-    //   }
-    let t:string[][]=table.raw();
+    let t: string[][] = table.raw();
 
-    values.forEach((e)=>{
-        if (t[count][0]!=e) {
-            status=false;
-            console.log("xxxx ",t[count][0],e);
-        }
-        count++;
-    })
+    values.forEach((e) => {
+      if (t[count][0].trim().toLowerCase() != e.trim().toLowerCase()) {
+        status = false;
+        console.log("xxxx ", t[count][0], e);
+      }
+      count++;
+    });
 
     await expect(status).toBeTruthy();
-  });
+  }
 
-  Given('User wait for {string} to be visible',async ({},element:string) => {
-    let visibleElement:Locator=basePage[element];
-    while (!visibleElement.isVisible) {
-        await new Promise(resolve => setTimeout(resolve, 100));;
+  @Then(/^User waits for (.+) to be visible$/)
+  async checkVisiblity(element: string) {
+    const visibleElement: Locator = this.basePage[element];
+    const maxRetries = 10; // Number of retries
+    const retryInterval = 100; // Milliseconds between retries
+    let isVisible = false;
+
+    for (let count = 0; count < maxRetries; count++) {
+      isVisible = await visibleElement.isVisible();
+      if (isVisible) break;
+      await new Promise((resolve) => setTimeout(resolve, retryInterval));
     }
-  });
 
-  Given('test',async ({}) => {
-    
+    // Assert visibility
+    await expect(isVisible).toBeTruthy();
+  }
 
-    
-  });
+  @Given(/^User fill (.+) by (.+)$/)
+  async fillElement(element: string, txtParameter: string) {
+    let elementLocator: Locator = this.basePage[element];
+    await elementLocator.fill(this.basePage[txtParameter]);
+  }
 
-/**check the functionality of any thing in the page like:
-- search 
-- sort 
-- visibility
--  click and check 
--  check if the url link changed or not
- */
+  @Given(/^User press (.+) key$/)
+  async pressKey(key: string) {
+    await this.page.keyboard.press(key);
+  }
+
+  @Then(/^User to wait for url (.+)$/)
+  async waitForUrl(url: string) {
+    let count: number = 0;
+    let result: boolean = true;
+    let pageUrl = this.page.url();
+
+    while (pageUrl.indexOf(this.basePage[url]) == -1) {
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      if (count == 20) {
+        console.log("url >>>>>>>>>>>>>>>>>> ", pageUrl);
+        result = false;
+        break;
+      }
+
+      pageUrl = this.page.url();
+
+      count++;
+    }
+    await expect(result).toBeTruthy();
+  }
+}
