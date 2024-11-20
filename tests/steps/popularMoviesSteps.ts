@@ -1,4 +1,11 @@
-import { expect, Page, Browser, chromium, Locator,test } from "@playwright/test";
+import {
+  expect,
+  Page,
+  Browser,
+  chromium,
+  Locator,
+  test,
+} from "@playwright/test";
 import { createBdd, DataTable } from "playwright-bdd";
 import BasePage from "../pages/basePage";
 import { Given, When, Then, Fixture } from "playwright-bdd/decorators";
@@ -32,10 +39,12 @@ class popularMoviesSteps {
   async checkPageElementText(element: string, txtParameter: string) {
     let elementLocator: Locator = await this.basePage[element];
     let textContent = await elementLocator.textContent();
-    await expect(textContent?.trim().toLowerCase()).toBe(this.basePage[txtParameter].trim().toLowerCase());
+    await expect(textContent?.trim().toLowerCase()).toBe(
+      this.basePage[txtParameter].trim().toLowerCase()
+    );
   }
 
-  @Given(/^User click on (.+)$/)
+  @When(/^User click on (.+)$/)
   async userClick(buttonElement: string) {
     let button = await this.basePage[buttonElement];
 
@@ -71,7 +80,6 @@ class popularMoviesSteps {
     values.forEach((e) => {
       if (t[count][0].trim().toLowerCase() != e.trim().toLowerCase()) {
         status = false;
-        console.log("xxxx ", t[count][0], e);
       }
       count++;
     });
@@ -102,7 +110,7 @@ class popularMoviesSteps {
     await elementLocator.fill(this.basePage[txtParameter]);
   }
 
-  @Given(/^User press (.+) key$/)
+  @When(/^User press (.+) key$/)
   async pressKey(key: string) {
     await this.page.keyboard.press(key);
   }
@@ -116,7 +124,6 @@ class popularMoviesSteps {
     while (pageUrl.indexOf(this.basePage[url]) == -1) {
       await new Promise((resolve) => setTimeout(resolve, 50));
       if (count == 20) {
-        console.log("url >>>>>>>>>>>>>>>>>> ", pageUrl);
         result = false;
         break;
       }
@@ -126,5 +133,13 @@ class popularMoviesSteps {
       count++;
     }
     await expect(result).toBeTruthy();
+  }
+
+
+  @Then(/^Page element (.+) attribute (.+) equal (.+)$/)
+  async checkPropertyValue(element: string, property: string, value: string) {
+    const elementLocator = this.basePage[element];
+    const data = await elementLocator.getAttribute(property);
+    await expect(data).toBe(value);
   }
 }
